@@ -1,0 +1,25 @@
+{
+  "name": "reallifekip/grid-map",
+  "description": "A lightweight grid-based area mapping library for defining rectangular regions in a cell grid.",
+  "type": "library",
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "ReallifeKip\\GridMap\\": "src/"
+    }
+  },
+  "require": {
+    "php": "^8.0"
+  },
+  "authors": [
+    {
+      "name": "ReallifeKip",
+      "email": "bill402099@gmail.com"
+    }
+  ],
+  "keywords": [
+    "grid",
+    "gridmap",
+    "grid-map"
+  ]
+}
