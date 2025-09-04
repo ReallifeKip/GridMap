@@ -1,23 +1,23 @@
 # GridMap
 
-**Languages:** English | [繁體中文](README.zh-TW.md)
+**Language:** English | [繁體中文](README.md)
 
-A lightweight, zero-dependency PHP library for deterministic grid-based rectangular placement. It helps you subdivide a fixed-size canvas (e.g., 1920x1080 layout, video wall, dashboard, compositing surface) into a logical grid and sequentially place rectangular slices defined by grid cell counts, returning precise pixel coordinates and sizes.
+A lightweight, zero-dependency PHP micro-library for **grid slicing**. It divides a fixed-size plane (e.g., 1920x1080 canvas, video wall, media composition, dashboard, or layout system) into a grid according to specified proportions, then sequentially “fills” rectangular slices into available cells and returns their pixel coordinates and sizes.
 
-`GridMap` uses a simple row-major first-fit scanning algorithm: for each requested slice (defined in grid units), it searches for the first contiguous free block large enough to hold it. Once placed, cells are marked as occupied. If no space can be found for a slice, an exception is thrown.
+`GridMap` uses a simple row-major first-fit scanning algorithm to find the first available area that can fit a slice of the requested grid width/height. If successful, the area is marked as occupied and the next slice is processed. If a slice cannot fit, an exception is thrown.
 
 ---
 
-## ✨ Features
+## ✨ Features Overview
 
-- ✅ Single-class, easy to grasp and integrate
-- ✅ Pure PHP ≥ 8.0 (no extensions needed)
-- ✅ Define regions by grid counts; returns pixel-based `x, y, width, height`
-- ✅ Deterministic first-fit ordering (repeatable output)
-- ✅ Uses integer division (`intdiv`) to avoid floating-point drift
-- ✅ Explicit exception if a slice cannot be placed
-- ✅ Suitable for layout prototyping, compositing, video walls, dashboards
-- ⚠️ Emits an `E_USER_NOTICE` if the full grid is not completely occupied (informational)
+- ✅ Single class, easy to understand and integrate
+- ✅ No extensions required: pure PHP ≥ 8.0
+- ✅ Define slices in “grid units” and automatically convert to pixel coordinates `x,y,width,height`
+- ✅ Deterministic first-fit placement, reproducible results
+- ✅ Uses integer division `intdiv` to avoid floating-point rounding errors
+- ✅ Automatically detects unplaceable slices and throws clear exceptions
+- ✅ Suitable for dynamic layouts, video walls, auto-layout suggestions
+- ⚠️ If not fully filled, triggers an `E_USER_NOTICE` about remaining empty cells
 
 ---
 
@@ -34,80 +34,88 @@ composer require reallifekip/grid-map
 ```php
 use ReallifeKip\GridMap\GridMap;
 
-// Canvas size: 1920x1080, divided into a 24 x 12 logical grid
+// Canvas size: 1920x1080; divided into 24 x 12 grid (typical 16:9 split)
 $gm = new GridMap(
-    area_w: 1920,
-    area_h: 1080,
-    grids_w: 24,
-    grids_h: 12,
+	area_w: 1920,
+	area_h: 1080,
+	grids_w: 24,
+	grids_h: 12,
 );
 
-// Define slices as [gridWidth, gridHeight]
+// Define slices: each element is [grid_width, grid_height]
+// Example: [6,6] means 6x6 grid cells
 $slices = [
-    [6, 6],
-    [6, 6],
-    [6, 6],
-    [6, 6],
-    [12, 6],
-    [12, 6],
+	[6, 6],
+	[6, 6],
+	[6, 6],
+	[6, 6],
+	[12, 6], // width 12, height 6
+	[12, 6],
 ];
 
 $areas = $gm->slice($slices);
+
 print_r($areas);
 ```
 
-Example output (values depend on grid placement order):
+Example output (actual may vary depending on allocation):
 
 ```php
 Array
 (
-    [0] => Array ( [x] => 0    [y] => 0    [width] => 480  [height] => 540 )
-    [1] => Array ( [x] => 480  [y] => 0    [width] => 480  [height] => 540 )
-    [2] => Array ( [x] => 960  [y] => 0    [width] => 480  [height] => 540 )
-    [3] => Array ( [x] => 1440 [y] => 0    [width] => 480  [height] => 540 )
-    [4] => Array ( [x] => 0    [y] => 540  [width] => 960  [height] => 540 )
-    [5] => Array ( [x] => 960  [y] => 540 [width] => 960  [height] => 540 )
+	[0] => Array ( [x] => 0    [y] => 0    [width] => 480  [height] => 540 )
+	[1] => Array ( [x] => 480  [y] => 0    [width] => 480  [height] => 540 )
+	[2] => Array ( [x] => 960  [y] => 0    [width] => 480  [height] => 540 )
+	[3] => Array ( [x] => 1440 [y] => 0    [width] => 480  [height] => 540 )
+	[4] => Array ( [x] => 0    [y] => 540  [width] => 960  [height] => 540 )
+	[5] => Array ( [x] => 960  [y] => 540 [width] => 960  [height] => 540 )
 )
 ```
 
-> Pixel width/height are derived from proportional integer partitioning.
-> Given `1920/24 = 80` and `1080/12 = 90`, a 6x6 slice → width = 6 _ 80 = 480, height = 6 _ 90 = 540.
+> The above width/height are actual pixels, calculated by dividing `(total_canvas / grid_count)`.
+> For example: `1920/24=80`, `1080/12=90`.
+> A 6-grid width = 6 × 80 = 480 pixels; a 6-grid height = 6 × 90 = 540 pixels.
 
 ---
 
-## 🧠 Core Concepts
+## 🧠 Core Concept
 
-| Term                 | Description                                             |
-| -------------------- | ------------------------------------------------------- |
-| `area_w`, `area_h`   | Final canvas size in pixels                             |
-| `grids_w`, `grids_h` | Logical grid subdivision counts (horizontal / vertical) |
-| slice `[cw, ch]`     | Requested rectangle measured in grid cells              |
-| return `areas[]`     | Each placed region with pixel `x,y,width,height`        |
+| Term                 | Description                                           |
+| -------------------- | ----------------------------------------------------- |
+| `area_w`, `area_h`   | Total canvas size (pixels)                            |
+| `grids_w`, `grids_h` | Number of grid divisions (horizontal / vertical)      |
+| slice `[cw, ch]`     | Slice rectangle defined in grid units, not pixels     |
+| return `areas[]`     | Each placed slice, with `x`,`y`,`width`,`height` (px) |
 
-Algorithm (simplified):
+Steps (simplified):
 
-1. Pre-compute grid line coordinates via integer division.
-2. Maintain a 1D occupancy array for all cells.
-3. For each slice: scan row-major for a free block; verify all cells free.
-4. Mark cells occupied; convert to pixel rectangle.
-5. If placement impossible → throw `Exception`.
-6. If leftover free cells remain → emit `E_USER_NOTICE`.
+1. Compute all grid line coordinates:
+   `cols[x] = intdiv(x * area_w, grids_w)`, `rows[y] = intdiv(y * area_h, grids_h)`
+2. Use a 1D array to mark whether each cell is occupied
+3. For each slice:
+
+   - Scan row-major for the first fitting location
+   - Check if all covered cells are free
+   - Mark occupied and convert to pixel rectangle
+
+4. Throw exception if slice cannot be placed
+5. If leftover space exists, trigger an `E_USER_NOTICE` (informational, can be ignored or handled)
 
 ---
 
 ## ✅ Example Use Cases
 
-| Scenario             | Description                                 |
-| -------------------- | ------------------------------------------- |
-| Media / Monitor Wall | Arrange multi-source feeds into a composite |
-| Video Compositing    | Map multi-track sources onto a final canvas |
-| Real-time Dashboard  | Auto-generate initial card layout           |
-| Game / Level Editing | Initial tile-based region prototyping       |
-| Ad Scheduling Layout | Placing multi-size creatives on a grid      |
+| Use Case           | Description                                       |
+| ------------------ | ------------------------------------------------- |
+| Media/Video wall   | Automatically arrange multiple video sources      |
+| Video compositing  | Map multiple tracks into fixed canvas coordinates |
+| Realtime dashboard | Auto-generate initial layouts for widget cards    |
+| Game/Level editor  | Plan map or scene block placements                |
+| Ad screen layout   | Place multiple ad creatives into grid layout      |
 
 ---
 
-## 🛠️ Advanced Example (Mixed Sizes + Error Handling)
+## 🛠️ Advanced Example: Mixed Sizes & Error Handling
 
 ```php
 use ReallifeKip\GridMap\GridMap;
@@ -115,103 +123,64 @@ use ReallifeKip\GridMap\GridMap;
 $gm = new GridMap(1200, 800, 20, 10);
 
 $slices = [
-    [4, 4], // A
-    [8, 4], // B
-    [4, 2], // C
-    [6, 6], // D (may fail depending on prior placement)
+	[4, 4], // A
+	[8, 4], // B
+	[4, 2], // C
+	[6, 6], // D may not fit later
 ];
 
 try {
-    $areas = $gm->slice($slices);
+	$areas = $gm->slice($slices);
 } catch (\Exception $e) {
-    echo 'Slice placement failed: ' . $e->getMessage();
+	// Thrown if a slice cannot be placed
+	echo 'Slice placement failed: ' . $e->getMessage();
 }
 ```
 
 ---
 
-## ⚠️ Notes & Constraints
+## ⚠️ Notes
 
-1. Each slice must be a two-integer array `[cw, ch]` (positive values)
-2. `cw` ≤ `grids_w`, `ch` ≤ `grids_h`
-3. Strategy is first-fit, not globally optimized packing
-4. For better packing, pre-sort slices (e.g., descending area) yourself
-5. Returned array index order matches input slice order
-6. Suppress or customize the partial-fill notice if desired
+1. Each slice must be `[cw, ch]` of two positive integers
+2. `cw` cannot exceed `grids_w`, `ch` cannot exceed `grids_h`
+3. Strategy is “first feasible placement”: not optimized for space, just deterministic
+4. For “optimal packing / rotation / reordering”, preprocess slices (e.g., sort by size)
+5. Returned array indexes correspond 1-to-1 with input slice order
+6. To ignore the unfilled notice, define a custom error handler or suppress `E_USER_NOTICE`
 
 ---
 
-## 🔍 Return Structure
+## 🔍 Return Data Format
 
 ```php
 [
-    [ 'x' => int, 'y' => int, 'width' => int, 'height' => int ],
-    // ...
+	[ 'x' => int, 'y' => int, 'width' => int, 'height' => int ],
+	...
 ]
 ```
 
-> The current PHPDoc suggests `array{height:int,width:int,x:int,y:int[]}`; consider updating to
-> `array<int, array{x:int,y:int,width:int,height:int}>` for clarity.
-
 ---
 
-## 🧪 Testing Suggestions
+## 🧪 Testing Suggestions (example)
 
-Recommended assertions (e.g., via PHPUnit):
+You may write PHPUnit tests to verify:
 
-- Count of returned areas equals slice count
-- No overlaps (reconstruct occupied cells for each and check intersections)
-- When fully filled: sum of slice cell areas == `grids_w * grids_h`
-- Oversized or unplaceable slice triggers `Exception`
-
----
-
-## 🧮 Complexity
-
-Let:
-
-- `G = grids_w * grids_h` (total cells)
-- `S = number of slices`
-- `A = average slice cell area (cw * ch)`
-
-Worst-case (scanning nearly entire grid each time):
-
-```
-Time  ~ O(S * G + S * A) ≈ O(S * G)
-Space ~ O(G)
-```
-
-Efficient for moderate grids (e.g., ≤ 100x100) and typical slice counts (< 200).
-
----
-
-## 🗺️ Roadmap (Potential)
-
-| Status | Item                                      |
-| ------ | ----------------------------------------- |
-| Idea   | Optional auto-rotation                    |
-| Idea   | Pluggable placement strategy hooks        |
-| Idea   | Free-space enumeration / gap analysis API |
-| Idea   | SVG / HTML visualization output           |
-| Idea   | PSR-12 coding standard + CI workflow      |
-
-Contributions & suggestions welcome!
+- Slice count matches returned array count
+- No overlapping rectangles (check original cell intersections)
+- When all slices fit, occupied grid count = `grids_w * grids_h`
+- Oversized slices trigger `Exception`
 
 ---
 
 ## 📄 License
 
-MIT License (see [LICENSE](./LICENSE)).
+This package uses the [MIT License](./LICENSE) – Free for commercial use / modification / distribution, just keep copyright notice.
 
 ---
 
-## 👤 Author
+## 👤 Developer Info
 
-Kip (bill402099@gmail.com)  
+Author: Kip ([bill402099@gmail.com](mailto:bill402099@gmail.com))
 GitHub: [@ReallifeKip](https://github.com/ReallifeKip)
 
-If this project helps you, please star it and share feedback.
-
----
-
-Made with ❤️ for practical layout automation.
+If this project helps you: feel free to Star, share, or suggest improvements!
