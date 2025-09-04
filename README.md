@@ -141,17 +141,6 @@ try {
 
 ---
 
-## 🔄 Optimization Tips
-
-| Goal            | Approach                                                     |
-| --------------- | ------------------------------------------------------------ |
-| Reduce failures | Sort slices by descending `cw*ch` before placement           |
-| Allow rotation  | Try `[cw,ch]` then `[ch,cw]` manually before calling `slice` |
-| Better packing  | Implement a custom strategy (best-fit / heuristic)           |
-| Fill gaps later | Write a helper to enumerate remaining free cells             |
-
----
-
 ## 🔍 Return Structure
 
 ```php
