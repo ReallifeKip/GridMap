@@ -1,6 +1,6 @@
 # GridMap
 
-**Language:** English | [繁體中文](README.md)
+**Language:** English | [繁體中文](README.zh-TW.md)
 
 A lightweight, zero-dependency PHP micro-library for **grid slicing**. It divides a fixed-size plane (e.g., 1920x1080 canvas, video wall, media composition, dashboard, or layout system) into a grid according to specified proportions, then sequentially “fills” rectangular slices into available cells and returns their pixel coordinates and sizes.
 
