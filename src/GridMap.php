@@ -10,9 +10,10 @@ use ReallifeKip\GridMap\Objects\DTOs\Slice;
 class GridMap
 {
     /**
-     * Slices the grid into smaller areas by the specified slice dimensions.
-     * @param array $slices Array of [width, height] pairs representing slice dimensions.
-     * @throws \Exception if a slice cannot be placed within the grid.
+     * Divides the grid into pixel-coordinate slices according to the cell definitions in $config.
+     * @param Config $config Grid dimensions, column/row counts, and cell span definitions.
+     * @throws \Exception if a cell cannot be placed within the available grid space.
+     * @throws \Exception if the cells do not fully cover the grid.
      * @return Slice[]
      */
     public static function slice(Config $config)
