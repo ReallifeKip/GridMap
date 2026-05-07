@@ -1,23 +1,22 @@
 # GridMap
 
-**語言:** 繁體中文 | [English](README.en.md)
+**語言:** 繁體中文 | [English](README.md)
 
-一個輕量、零相依的「格狀區域切片 (grid slicing)」小型 PHP 函式庫，用來在固定尺寸的平面（例如：1920x1080 畫布、看板牆、影音合成畫面、Dashboard 或佈局系統）上，依照指定的網格劃分比例，將多個矩形區塊依序「填入」可用的格子並回傳實際像素座標與尺寸。
+一個輕量的「格狀區域切片 (grid slicing)」PHP 函式庫，用來在固定尺寸的平面（例如：1920×1080 畫布、看板牆、影音合成畫面、Dashboard 或佈局系統）上，依照指定的網格劃分，將多個矩形區塊依序「填入」可用的格子，並回傳實際像素座標與尺寸。
 
-`GridMap` 透過簡單掃描演算法（row-major first-fit）尋找第一個可容納指定寬高格數的空區域；成功即標記佔用並繼續下一個切片。若切片無法放入則拋出例外。
+`GridMap` 透過列優先掃描演算法（row-major first-fit）尋找第一個可容納指定欄數/列數的空區域；成功即標記佔用並繼續下一個切片。若切片無法放入、或所有切片放完後網格仍未完全填滿，則拋出例外。
 
 ---
 
 ## ✨ 特性總覽
 
-- ✅ 單一類別，極易理解與整合
-- ✅ 不需額外安裝擴充：純 PHP ≥ 8.0
-- ✅ 以「格子數」描述切片，最後自動換算為實際像素 `x,y,width,height`
-- ✅ 先填先放（ deterministic ）、可重現結果
+- ✅ 單一靜態類別，極易理解與整合
+- ✅ 純 PHP ≥ 8.0，搭配型別安全的不可變 DTO
+- ✅ 以「格子數」描述切片，自動換算為實際像素 `x, y, width, height`
+- ✅ 先填先放（deterministic），可重現結果
 - ✅ 採整數除法 `intdiv` 避免浮點累積誤差
-- ✅ 自動偵測無法放置的切片並拋出明確例外
+- ✅ 自動偵測無法放置或未完整填滿的情況，並拋出明確例外
 - ✅ 可用於動態排版、視覺拼接、媒體牆、自動版面建議
-- ⚠️ 若未完全填滿會以 `E_USER_NOTICE` 提示剩餘空格
 
 ---
 
@@ -33,69 +32,76 @@ composer require reallifekip/grid-map
 
 ```php
 use ReallifeKip\GridMap\GridMap;
+use ReallifeKip\GridMap\Objects\DTOs\Config;
 
-// 整體畫布尺寸：1920x1080；切成 24 x 12 的格子（典型 16:9 分割）
-$gm = new GridMap(
-	area_w: 1920,
-	area_h: 1080,
-	grids_w: 24,
-	grids_h: 12,
+// 整體畫布：1920×1080，切成 24×12 的格子（典型 16:9 分割）
+$result = GridMap::slice(
+    Config::fromArray([
+        'imageWidth'  => 1920,
+        'imageHeight' => 1080,
+        'columns'     => 24,
+        'rows'        => 12,
+        'cells'       => [
+            ['colSpan' => 6,  'rowSpan' => 6],
+            ['colSpan' => 6,  'rowSpan' => 6],
+            ['colSpan' => 6,  'rowSpan' => 6],
+            ['colSpan' => 6,  'rowSpan' => 6],
+            ['colSpan' => 12, 'rowSpan' => 6],
+            ['colSpan' => 12, 'rowSpan' => 6],
+        ],
+    ])
 );
 
-// 定義欲放置的切片：每個元素是 [寬度格數, 高度格數]
-// 例如 [6,6] 代表佔用 6x6 格
-$slices = [
-	[6, 6],
-	[6, 6],
-	[6, 6],
-	[6, 6],
-	[12, 6], // 寬 12 高 6
-	[12, 6],
-];
-
-$areas = $gm->slice($slices);
-
-print_r($areas);
+print_r($result);
 ```
 
-範例輸出（依實際分配結果而定）：
+範例輸出：
 
-```php
+```
 Array
 (
-	[0] => Array ( [x] => 0    [y] => 0    [width] => 480  [height] => 540 )
-	[1] => Array ( [x] => 480  [y] => 0    [width] => 480  [height] => 540 )
-	[2] => Array ( [x] => 960  [y] => 0    [width] => 480  [height] => 540 )
-	[3] => Array ( [x] => 1440 [y] => 0    [width] => 480  [height] => 540 )
-	[4] => Array ( [x] => 0    [y] => 540  [width] => 960  [height] => 540 )
-	[5] => Array ( [x] => 960  [y] => 540 [width] => 960  [height] => 540 )
+    [0] => Slice Object ( [x] => 0    [y] => 0    [width] => 480  [height] => 540 )
+    [1] => Slice Object ( [x] => 480  [y] => 0    [width] => 480  [height] => 540 )
+    [2] => Slice Object ( [x] => 960  [y] => 0    [width] => 480  [height] => 540 )
+    [3] => Slice Object ( [x] => 1440 [y] => 0    [width] => 480  [height] => 540 )
+    [4] => Slice Object ( [x] => 0    [y] => 540  [width] => 960  [height] => 540 )
+    [5] => Slice Object ( [x] => 960  [y] => 540  [width] => 960  [height] => 540 )
 )
 ```
 
-> 上述寬高為「實際像素」，係由 `(格子總寬度 / grids_w)` 的比例換算。
-> 若 `1920/24=80`、`1080/12=90`，則 6 格寬 = 6 _ 80 = 480 像素；6 格高 = 6 _ 90 = 540 像素。
+> 上述寬高為「實際像素」，係由 `intdiv` 整數除法換算。
+> 若 `1920/24 = 80`、`1080/12 = 90`，則 6 欄寬 = 6 × 80 = 480 px；6 列高 = 6 × 90 = 540 px。
 
 ---
 
 ## 🧠 核心概念
 
-| 名稱                 | 說明                                                |
-| -------------------- | --------------------------------------------------- |
-| `area_w`, `area_h`   | 整體畫布尺寸（像素）                                |
-| `grids_w`, `grids_h` | 欲將畫布切成的網格總數（橫 / 縱）                   |
-| slice `[cw, ch]`     | 要放入之矩形切片，使用「格子數」非像素              |
-| 回傳 `areas[]`       | 每個已放置切片，含 `x`,`y`,`width`,`height`（像素） |
+| 名稱                          | 說明                                                  |
+| ----------------------------- | ----------------------------------------------------- |
+| `imageWidth`, `imageHeight`   | 整體畫布尺寸（像素）                                  |
+| `columns`, `rows`             | 欲將畫布切成的網格總數（橫 / 縱）                     |
+| `Cell` `colSpan`, `rowSpan`   | 要放入之矩形切片，使用「格子數」而非像素              |
+| 回傳 `Slice[]`                | 每個已放置切片物件，含 `x`、`y`、`width`、`height`（像素） |
+
+### Config 預設值
+
+| 屬性          | 預設值 |
+| ------------- | ------ |
+| `imageWidth`  | `2500` |
+| `imageHeight` | `1686` |
+| `columns`     | `24`   |
+| `rows`        | `12`   |
 
 步驟（簡化）：
 
-1. 先計算所有格線座標：`cols[x] = intdiv(x * area_w, grids_w)`、`rows[y] = intdiv(y * area_h, grids_h)`
+1. 計算所有格線座標：`cols[x] = intdiv(x * imageWidth, columns)`、`rows[y] = intdiv(y * imageHeight, rows)`
 2. 使用一維陣列標記每個 cell 是否被佔用
-3. 對每個切片：
+3. 對每個 `Cell`：
    - 依列優先（row-major）掃描第一個可放下的位置
    - 確認其覆蓋區塊內所有 cell 均未佔用
-   - 標記佔用並計算實際像素矩形
-4. 若無法放入則拋出例外
-5. 最後若尚有空格，觸發一則 `E_USER_NOTICE`（這是資訊性提示，可忽略或自訂錯誤處理）
+   - 標記佔用並計算實際像素 `Slice`
+4. 若無法放入則拋出 `\Exception`
+5. 所有 cell 放置完後若網格未完全填滿，同樣拋出 `\Exception`
 
 ---
 
@@ -115,21 +121,26 @@ Array
 
 ```php
 use ReallifeKip\GridMap\GridMap;
-
-$gm = new GridMap(1200, 800, 20, 10);
-
-$slices = [
-	[4, 4], // A
-	[8, 4], // B
-	[4, 2], // C
-	[6, 6], // D 可能後期無法放置
-];
+use ReallifeKip\GridMap\Objects\DTOs\Config;
 
 try {
-	$areas = $gm->slice($slices);
+    $result = GridMap::slice(
+        Config::fromArray([
+            'imageWidth'  => 1200,
+            'imageHeight' => 800,
+            'columns'     => 20,
+            'rows'        => 10,
+            'cells'       => [
+                ['colSpan' => 4,  'rowSpan' => 4], // A
+                ['colSpan' => 8,  'rowSpan' => 4], // B
+                ['colSpan' => 8,  'rowSpan' => 4], // C — 須完整填滿網格
+                ['colSpan' => 20, 'rowSpan' => 6], // D
+            ],
+        ])
+    );
 } catch (\Exception $e) {
-	// 若某切片放不下會在此拋出
-	echo 'Slice placement failed: ' . $e->getMessage();
+    // 若某切片放不下，或網格未完整填滿，皆會在此拋出
+    echo 'Slice failed: ' . $e->getMessage();
 }
 ```
 
@@ -137,32 +148,40 @@ try {
 
 ## ⚠️ 注意事項
 
-1. 切片陣列內每個元素必須為兩個正整數 `[cw, ch]`
-2. `cw` 不可大於 `grids_w`，`ch` 不可大於 `grids_h`
+1. 每個 `Cell` 須包含兩個正整數：`colSpan` 與 `rowSpan`
+2. `colSpan` 不可大於 `columns`；`rowSpan` 不可大於 `rows`
 3. 目前策略為「第一個可行位置即放置」：非最佳化空間利用，只求 deterministic
 4. 若需要「最佳填充 / 旋轉 / 重新排序」請自行前處理（例如排序切片由大到小）
-5. 回傳的陣列索引順序與輸入切片順序一一對應
-6. 若想忽略未填滿提示，可設定自訂錯誤處理或抑制對應 `E_USER_NOTICE`
+5. 回傳的 `Slice[]` 陣列索引順序與輸入 `cells` 順序一一對應
+6. 所有 cell 必須**完整填滿**整個網格，否則拋出 `\Exception`
+
+---
 
 ## 🔍 回傳資料格式
 
+回傳 `Slice` 物件陣列：
+
 ```php
-[
-	[ 'x' => int, 'y' => int, 'width' => int, 'height' => int ],
-	...
-]
+/** @var ReallifeKip\GridMap\Objects\DTOs\Slice[] $result */
+$result[0]->x;      // int — 左邊緣像素座標
+$result[0]->y;      // int — 上邊緣像素座標
+$result[0]->width;  // int — 寬度（像素）
+$result[0]->height; // int — 高度（像素）
 ```
 
 ---
 
-## 🧪 測試建議（示意）
+## 🧪 測試建議
 
 可自行撰寫 PHPUnit 測試驗證：
 
 - 切片數量與回傳陣列數量一致
 - 所有矩形不互相重疊（轉換回原始 cell 交集檢查）
-- 全部成功放置時佔用格數 = `grids_w * grids_h`
-- 超出限制的切片觸發 `Exception`
+- 全部成功放置且完整填滿時，佔用格數 = `columns * rows`
+- 超出限制的切片觸發 `\Exception`
+- 未完整填滿的配置觸發 `\Exception`
+
+---
 
 ## 📄 授權 License
 
@@ -172,7 +191,7 @@ try {
 
 ## 👤 開發者資訊
 
-作者：Kip (bill402099@gmail.com)  
+作者：Kip ([bill402099@gmail.com](mailto:bill402099@gmail.com))
 GitHub：[@ReallifeKip](https://github.com/ReallifeKip)
 
 如果本專案對你有幫助：歡迎 Star、分享或提出改進建議！

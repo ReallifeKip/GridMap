@@ -1,0 +1,93 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "73bb87bbb24bccb2daaa51aa8e1b2b76",
+    "packages": [
+        {
+            "name": "reallifekip/immutable-base",
+            "version": "v4.3.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ReallifeKip/ImmutableBase.git",
+                "reference": "048ca9ca5a597b42eaa9175d9263b0d4f2c65937"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ReallifeKip/ImmutableBase/zipball/048ca9ca5a597b42eaa9175d9263b0d4f2c65937",
+                "reference": "048ca9ca5a597b42eaa9175d9263b0d4f2c65937",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.4"
+            },
+            "require-dev": {
+                "laravel/prompts": "^0.3.13",
+                "mikey179/vfsstream": "^1.6",
+                "phpbench/phpbench": "^1.4",
+                "phpdocumentor/reflection-docblock": "^6.0",
+                "phpunit/phpunit": "^10"
+            },
+            "bin": [
+                "bin/ib-cacher",
+                "bin/ib-writer"
+            ],
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "ReallifeKip\\ImmutableBase\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "ReallifeKip",
+                    "email": "bill402099@gmail.com"
+                }
+            ],
+            "description": "Strict immutable DTOs, VOs, and SVOs for PHP 8.4+ with construction-time type validation, deep path mutation, and automatic validation chaining.",
+            "keywords": [
+                "array-conversion",
+                "data-transfer-object",
+                "ddd",
+                "domain-driven-design",
+                "dto",
+                "immutable",
+                "php",
+                "php84",
+                "readonly",
+                "reflection",
+                "serialization",
+                "single-value-object",
+                "svo",
+                "toArray",
+                "toJson",
+                "type-safety",
+                "validation",
+                "value-object",
+                "vo"
+            ],
+            "support": {
+                "issues": "https://github.com/ReallifeKip/ImmutableBase/issues",
+                "source": "https://github.com/ReallifeKip/ImmutableBase/tree/v4.3.2"
+            },
+            "time": "2026-05-04T15:20:30+00:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": {},
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": {
+        "php": "^8.0"
+    },
+    "platform-dev": {},
+    "plugin-api-version": "2.6.0"
+}
